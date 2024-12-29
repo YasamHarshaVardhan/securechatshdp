@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Chat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+
+    h2 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4a90e2;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-align: center;
+    margin: 0;
+    padding: 9px;
+    
+    
+  }
+
+
+
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #e5ddd5; /* WhatsApp-like background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #chatBox {
+      width: 100%;
+      max-width: 450px;
+      height: 600px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    h3 {
+      margin: 10px 0;
+      font-size: 16px;
+      color: #555;
+      font-weight: bold;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      word-wrap: break-word;
+      display: inline-block;
+    }
+
+    .message.self {
+      background-color: #25d366; /* WhatsApp green */
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .message.other {
+      background-color: #f1f1f1;
+      color: black;
+      align-self: flex-start;
+    }
+
+    .message-text {
+      display: block;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    #chatBox::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #chatBox::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    #chatBox::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <!-- <h2>Secure Chat App By YASAM HARSHA VARDHAN</h2> -->
+
+
+    <!-- Displaying chat messages -->
+    <div id="chatBox">
+      <h2>Secure Chat App By</h2> <h2>YASAM HARSHA VARDHAN</h2>
+        {% for user, message in combined_messages %}
+        <div class="message {% if user == 'u1' %}self{% else %}other{% endif %}" onclick="toggleMessage(this, '{{ message|escapejs }}')">
+          <span class="message-text">{{ message|escapejs }}</span>
+        </div>
+      {% endfor %}
+
+      <form method="post" class="mb-4">
+        {% csrf_token %}
+        {{ form_u1.as_p }}
+        <button type="submit" class="btn btn-primary">User1</button>
+      </form>
+  
+      <!-- Form for User2 -->
+      <form method="post" class="mb-4">
+        {% csrf_token %}
+        {{ form_u2.as_p }}
+        <button type="submit" class="btn btn-primary">user2</button>
+      </form>
+      
+        <!-- Button to Delete All Chats -->
+        <form method="post" action="{% url 'delete_chats' %}" class="mb-4">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Delete All Chats</button>
+      </form>
+
+
+
+      <!-- <form method="post" class="mb-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form> -->
+    </div>
+    </div>
+   
+    
+    <!-- Form for sending messages -->
+    
+  <script>
+    // Function to encode message in Base64
+    function encodeMessage(message) {
+      return btoa(message);  // btoa() encodes the message in Base64
+    }
+
+    // Function to decode message from Base64
+    function decodeMessage(encodedMessage) {
+      return atob(encodedMessage);  // atob() decodes the Base64 message
+    }
+
+    // Toggle encoding/decoding of a message
+    function toggleMessage(element, originalMessage) {
+      const span = element.querySelector(".message-text");
+      if (element.classList.contains("encoded")) {
+        // Decode the message when it's clicked
+        span.textContent = decodeMessage(span.textContent);
+        element.classList.remove("encoded");
+      } else {
+        // Re-encode the message when it's clicked again
+        span.textContent = encodeMessage(originalMessage);
+        element.classList.add("encoded");
+      }
+    }
+
+    // Listen for "You" form submission (user's message)
+    document.getElementById('userForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const chatBox = document.getElementById('chatBox');
+      const userMessageInput = document.getElementById('userMessage');
+      const message = userMessageInput.value.trim();
+
+      if (message) {
+        // Encode the message before sending
+        const encodedMessage = encodeMessage(message);
+
+        // Add new message from "You"
+        const newMessageSelf = document.createElement('div');
+        newMessageSelf.classList.add('message', 'self');
+        newMessageSelf.innerHTML = `<span class="message-text">${encodedMessage}</span>`;
+
+        // Add event listener for toggling encoding/decoding
+        newMessageSelf.addEventListener('click', function() {
+          if (newMessageSelf.classList.contains('encoded')) {
+            // Decode the message when it's clicked
+            newMessageSelf.classList.remove('encoded');
+            newMessageSelf.innerHTML = `<span class="message-text">${decodeMessage(encodedMessage)}</span>`;
+          } else {
+            // Re-encode the message when it's clicked again
+            newMessageSelf.classList.add('encoded');
+            newMessageSelf.innerHTML = `<span class="message-text">${encodedMessage}</span>`;
+          }
+        });
+
+        chatBox.appendChild(newMessageSelf);
+
+        // Scroll to the bottom of the chat
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Clear the input
+        userMessageInput.value = '';
+      }
+    });
+
+    // Listen for "Other User" form submission (other user's message)
+    document.getElementById('otherForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const chatBox = document.getElementById('chatBox');
+      const otherMessageInput = document.getElementById('otherMessage');
+      const message = otherMessageInput.value.trim();
+
+      if (message) {
+        // Encode the message before sending
+        const encodedMessage = encodeMessage(message);
+
+        // Add new message from "Other User"
+        const newMessageOther = document.createElement('div');
+        newMessageOther.classList.add('message', 'other');
+        newMessageOther.innerHTML = `<span class="message-text">${encodedMessage}</span>`;
+
+        // Add event listener for toggling encoding/decoding
+        newMessageOther.addEventListener('click', function() {
+          if (newMessageOther.classList.contains('encoded')) {
+            // Decode the message when it's clicked
+            newMessageOther.classList.remove('encoded');
+            newMessageOther.innerHTML = `<span class="message-text">${decodeMessage(encodedMessage)}</span>`;
+          } else {
+            // Re-encode the message when it's clicked again
+            newMessageOther.classList.add('encoded');
+            newMessageOther.innerHTML = `<span class="message-text">${encodedMessage}</span>`;
+          }
+        });
+
+        chatBox.appendChild(newMessageOther);
+
+        // Scroll to the bottom of the chat
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Clear the input
+        otherMessageInput.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
